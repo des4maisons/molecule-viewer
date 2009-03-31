@@ -43,18 +43,22 @@ class Molecule:
     f = file(filename)
     for line in f:
       if line.startswith("ATOM"):
-        parse_atom(line)
+        self.parse_atom(line)
       elif line.startswith("CONNECT"):
-        parse_connect(line)
+        self.parse_connect(line)
       elif line.startswith("COMPOUND"):
-        parse_author(line)
+        pass #self.parse_author(line)
       elif line.startswith("TER"):
         pass
       elif line.startswith("END"):
         pass
+      elif line.startswith("AUTHOR"):
+        pass
+    else:
+        pass
 
   def parse_atom(self, str):
-    type, seqnum, elt, one, x, y, z, who, cares = str.split(" ")
+    type, seqnum, elt, one, x, y, z, who, cares = str.split()
     atoms.append(Molecule(x,y,z,seqnum))
   def parse_connect(self, str):
     pass
@@ -93,5 +97,5 @@ def show(view):
 
 if __name__ == "__main__":
   import sys
-  filename = sys.args[1]
-  Molecule(filename).draw
+  filename = sys.argv[1]
+  Molecule(filename).draw()
