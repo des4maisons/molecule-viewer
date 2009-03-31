@@ -1,8 +1,11 @@
 from __future__ import division
 class Atom:
-  def __init__(self, x, y, z, id):
+  def __init__(self, x, y, z, symbol, id):
     self.coordinate = Coordinate(x,y,z)
+    self.symbol = symbol
     self.id = id
+  def flatten(self):
+    return self.coordinate.flatten()
 
 class Coordinate:
   def __init__(self, x,y,z):
@@ -24,8 +27,8 @@ class Coordinate:
   
   # project self onto 'onto'
   def project(self, onto):
-    len = length(onto)
-    scale_factor = dot(self, onto)/(len**2)
+    len = onto.length()
+    scale_factor = self.dot(onto)/(len**2)
     return onto * scale_factor
 
   # flatten takes a tuple of coordinates, which when interpreted as vectors
@@ -39,7 +42,7 @@ class Coordinate:
 
 class Molecule:
   def __init__(self, filename):
-    atoms = []
+    self.atoms = []
     f = file(filename)
     for line in f:
       if line.startswith("ATOM"):
@@ -59,14 +62,14 @@ class Molecule:
 
   def parse_atom(self, str):
     type, seqnum, elt, one, x, y, z, who, cares = str.split()
-    atoms.append(Molecule(x,y,z,seqnum))
+    self.atoms.append(Atom(float(x),float(y),float(z),elt,int(seqnum)))
   def parse_connect(self, str):
     pass
   # dimensions is a tuple of the number of characters on x and y axis
   def draw(self, plane=None, dimensions=None):
     if dimensions == None:
       dimensions = (80,32)
-    flattened = [a.flatten for a in self.atoms]
+    flattened = [a.flatten() for a in self.atoms]
     x_max = max([coor[0] for coor in flattened])
     x_min = min([coor[0] for coor in flattened])
     y_max = max([coor[1] for coor in flattened])
@@ -84,9 +87,9 @@ class Molecule:
       for j in range(dimensions[1]):
         view[i].append("`")
     from math import ciel
-    for atom in atoms:
-      x = atom.flatten[0]*scale_factor - x_shift
-      y = atom.flatten[1]*scale_factor - y_shift
+    for atom in self.atoms:
+      x = atom.flatten()[0]*scale_factor - x_shift
+      y = atom.flatten()[1]*scale_factor - y_shift
       view[floor(x), floor(y)] = atom.symbol
     show(view)
 
