@@ -1,0 +1,10 @@
+David!
+
+maybe you don't need to make your blocks square. it might look
+funky for the bigger molecules.
+
+But please use nice colours! Not just the ugly default ones.
+
+the way to run it is 
+python draw_molecule.py filename [width, height]
+where width and height are your terminal's width and height, in characters.
