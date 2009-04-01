@@ -76,6 +76,8 @@ class Coordinate(object):
   def flatten(self, plane=None):
     if plane == None: #defaults to x-y plane
       plane = [Coordinate(1,0,0), Coordinate(0,1,0)]
+    # copy the list
+    plane = list(plane)
     # get 2 perpendicular vectors that define the same plane
     perp = plane[0].cross(plane[1])
     plane[0] = perp.cross(plane[1])
