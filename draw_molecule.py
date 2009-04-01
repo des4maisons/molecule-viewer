@@ -87,9 +87,8 @@ class Coordinate(object):
 
     proj0 = self.project(plane[0])
     proj1 = self.project(plane[1])
-    ratio0 = 0
-    ratio1 = 0
-
+    ratio0 = None
+    ratio1 = None
     # the (signed) number of times the unit vector fits into the projection
     # is the 2 dimensional coordinate we want
     # so (2,0) == 2 * (1,0), 2 is what we want. don't divide by zero.
@@ -100,7 +99,7 @@ class Coordinate(object):
       val = getattr(plane[1], component)
       if val != 0:
         ratio1 = getattr(proj1, component) / val
-    if not (ratio0 or ratio1): # if either are 0
+    if (ratio0 == None or ratio1 == None): # if either are 0
       raise "plane defined with zero vector"
     return Coordinate2D(ratio0, ratio1)
 
@@ -131,7 +130,7 @@ class Molecule(object):
   # dimensions is 2-tuple of the number of characters on x and y axis
   def draw(self, plane=None, dimensions=None):
     if dimensions == None:
-      dimensions = (30, 80)
+      dimensions = (80, 29)
     screen = Screen(dimensions)
     flattened = [a.flatten(plane) for a in self.atoms]
     max_extreme = Coordinate2D(max([coor.x for coor in flattened]),
@@ -154,15 +153,14 @@ class Molecule(object):
 class Screen(list):
   def __init__(self, widthheight):
     list.__init__(self)
-    self.width = widthheight[0]
-    self.height = widthheight[1]
+    self.width = widthheight[1]
+    self.height = widthheight[0]
     for i in range(self.width):
       self.append([])
       for j in range(self.height):
         self[i].append(" ")
 
   def set(self, index, val):
-    print index
     x = index[0]
     y = index[1]
     self[x][y] = val
@@ -173,11 +171,18 @@ class Screen(list):
 
 if __name__ == "__main__":
   filename = sys.argv[1]
+  try:
+    width = sys.argv[2]
+    height = sys.argv[3]
+    dims = (int(width), int(height) - 1)
+  except IndexError:
+    dims = None
   angle = 0
   angle_incr = (2 * pi) * (1/40) # 40th of a circle
   while True:
     Molecule(filename).draw(plane = [Coordinate(0,1,0),
-                                     Coordinate(sin(angle), 0, cos(angle))])
+                                     Coordinate(sin(angle), 0, cos(angle))],
+                            dimensions = dims)
     angle = angle + angle_incr
     time.sleep(0.5)
     print "\33[H"
