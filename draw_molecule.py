@@ -1,4 +1,9 @@
 from __future__ import division
+import pdb
+from math import sin, cos, pi, sqrt
+import sys
+import time
+
 class Coordinate2D(object):
   def __init__(self, x, y):
     self.x = x
@@ -9,31 +14,39 @@ class Coordinate2D(object):
     return Coordinate2D(self.x + coor.x, self.y + coor.y)
   def __sub__(self, coor):
     return self + coor * (-1)
+  def __truediv__(self, const):
+    return self * (1/const)
+  def __repr__(self):
+    return "(%.02f, %.02f)" %(self.x, self.y)
+  def __str__(self):
+    return self.__repr__()
 
 class Atom(object):
   def __init__(self, x, y, z, symbol, id):
     self.coordinate = Coordinate(x,y,z)
     self.symbol = symbol
-    self.id = id
+    self.id = int(id)
+  def __repr__(self):
+    return str((self.symbol, self.id, self.coordinates))
+  def __str__(self):
+    return self.__repr__()
   def flatten(self, plane=None):
     return self.coordinate.flatten(plane)
+  # Ugly! return symbol in a randomish ansi colour
+  def coloured_symbol(self): 
+    return "\x1b[" + str(31 + (self.id % 7)) + "m" + self.symbol
 
 class Coordinate(object):
   def __init__(self, x,y,z):
     self.x, self.y, self.z = [x,y,z]
-  
   def __repr__(self):
-    return str((self.x, self.y, self.z))
-
+    return "(%.02f, %.02f, %.02f)" %(self.x, self.y, self.z)
   def __str__(self):
     return self.__repr__()
-
   def __truediv__(self, const):
     return self * (1/const)
-
   def __mul__(self, const):
     return Coordinate(self.x*const, self.y*const, self.z*const)
-  
   def __add__(self, coor):
     return Coordinate(self.x + coor.x, self.y + coor.y, self.z + coor.z)
 
@@ -42,7 +55,6 @@ class Coordinate(object):
     return (self.x * vector.x + self.y * vector.y + self.z * vector.z)
   
   def length(self):
-    from math import sqrt
     return sqrt((self.x ** 2) + (self.y ** 2) + (self.z ** 2))
   
   # project self onto 'onto'
@@ -98,9 +110,9 @@ class Molecule(object):
       if line.startswith("ATOM"):
         self.parse_atom(line)
       elif line.startswith("CONNECT"):
-        self.parse_connect(line)
+        pass
       elif line.startswith("COMPOUND"):
-        pass #self.parse_author(line)
+        pass
       elif line.startswith("TER"):
         pass
       elif line.startswith("END"):
@@ -108,45 +120,62 @@ class Molecule(object):
       elif line.startswith("AUTHOR"):
         pass
     else:
-        pass
+        pass #throw some error
 
   def parse_atom(self, str):
     type, seqnum, elt, one, x, y, z, who, cares = str.split()
     self.atoms.append(Atom(float(x),float(y),float(z),elt,int(seqnum)))
-  def parse_connect(self, str):
-    pass
-  # dimensions is Coordinate2D of the number of characters on x and y axis
+  
+  # dimensions is 2-tuple of the number of characters on x and y axis
   def draw(self, plane=None, dimensions=None):
     if dimensions == None:
-      dimensions = Coordinate2D(80, 32)
+      dimensions = (30, 80)
+    screen = Screen(dimensions)
     flattened = [a.flatten(plane) for a in self.atoms]
     max_extreme = Coordinate2D(max([coor.x for coor in flattened]),
                                max([coor.y for coor in flattened]))
     min_extreme = Coordinate2D(min([coor.x for coor in flattened]),
                                min([coor.y for coor in flattened]))
-    delta = max_extreme - min_extreme
+    span = max_extreme - min_extreme
     # make everything fit in our dimensions while maintaining proportions
-    scale_factor = min(dimensions.x/delta.x, dimension.y/delta.y)
-    # shift to be in the 1st quadrant (positive coordinates) close to (0,0)
-    shift = Coordinate2D(min.x * dimensions.x, min.y * dimensions.y)
-    
-    view = []
-    for i in range(dimensions[0]):
-      view.append([])
-      for j in range(dimensions[1]):
-        view[i].append("`")
-    from math import ciel
+    scale_factor = min((screen.width - 1)/span.x, (screen.height - 1)/span.y)
+    extra_space = Coordinate2D(screen.width-1,screen.height-1)-span*scale_factor
+    offset = extra_space/2
     for atom in self.atoms:
-      viewcoor = atom.flatten() * scale_factor - shift
-      view[floor(viewcoor.x), floor(viewcoor.y)] = atom.symbol
-    show(view)
+      # shift to be in the 1st quadrant (positive coordinates) close to (0,0)
+      screen_index = (atom.flatten(plane) - min_extreme) * scale_factor
+      screen_index = screen_index + offset
+      screen_index = (int(round(screen_index.x)), int(round(screen_index.y)))
+      screen.set(screen_index, atom.coloured_symbol())
+    screen.show()
 
-def show(view):
-  for row in view:
-    for column in row:
-      print column
+class Screen(list):
+  def __init__(self, widthheight):
+    list.__init__(self)
+    self.width = widthheight[0]
+    self.height = widthheight[1]
+    for i in range(self.width):
+      self.append([])
+      for j in range(self.height):
+        self[i].append(" ")
+
+  def set(self, index, val):
+    print index
+    x = index[0]
+    y = index[1]
+    self[x][y] = val
+
+  def show(self):
+    for row in self:
+      print "".join(row)
 
 if __name__ == "__main__":
-  import sys
   filename = sys.argv[1]
-  Molecule(filename).draw()
+  angle = 0
+  angle_incr = (2 * pi) * (1/40) # 40th of a circle
+  while True:
+    Molecule(filename).draw(plane = [Coordinate(0,1,0),
+                                     Coordinate(sin(angle), 0, cos(angle))])
+    angle = angle + angle_incr
+    time.sleep(0.5)
+    print "\33[H"
