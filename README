@@ -1,10 +1,9 @@
-David!
+View a rotating molecule in your terminal! You will need a molecule described
+in a .pdb file.
 
-maybe you don't need to make your blocks square. it might look
-funky for the bigger molecules.
+Usage:
+python draw_molecule.py pdb-filename [width height]
 
-But please use nice colours! Not just the ugly default ones.
-
-the way to run it is 
-python draw_molecule.py filename [width, height]
 where width and height are your terminal's width and height, in characters.
+If you can choose a font whose height is the same as it's width, it will look
+less weird :)
